@@ -3,132 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Definitie Bingo | NATO Onderwijs</title>
+    <title>Gevalideerde Woordenschat Bingo</title>
     <style>
-        :root {
-            --primary: #002C52; /* Korps-blauw */
-            --secondary: #004682;
-            --accent: #FFD700; /* Goud */
-            --bg: #F0F4F8;
-            --white: #FFFFFF;
-            --shadow: 0 8px 30px rgba(0,0,0,0.12);
-        }
-
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        /* Login Scherm */
-        #login-overlay {
-            position: fixed; inset: 0; background: var(--bg);
-            z-index: 1000; display: flex; justify-content: center; align-items: center;
-        }
-        .login-card {
-            background: var(--white); padding: 3rem; border-radius: 16px;
-            box-shadow: var(--shadow); width: 350px; text-align: center;
-            border-top: 10px solid var(--primary);
-        }
-
-        /* Hoofd UI */
-        .container { width: 90%; max-width: 900px; margin: 2rem auto; display: none; }
+        :root { --primary: #002C52; --accent: #FFD700; --error: #ff4444; --bg: #F0F4F8; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; }
         
-        .header { text-align: center; margin-bottom: 2rem; }
-        .status-bar { 
-            background: var(--primary); color: white; padding: 10px 20px; 
-            border-radius: 50px; display: inline-block; font-size: 0.9rem; margin-bottom: 1rem;
+        /* Containers */
+        .container { width: 95%; max-width: 1000px; margin: 20px; display: none; }
+        #login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
+        
+        /* Bingo Card */
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
+        .cell { 
+            background: white; aspect-ratio: 1/1; padding: 10px; border-radius: 8px; 
+            display: flex; align-items: center; justify-content: center; text-align: center; 
+            font-size: 0.8rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 2px solid transparent; transition: 0.2s;
         }
+        .cell.marked { background: var(--primary); color: white; border-color: var(--accent); }
+        .cell.wrong { background: var(--error); color: white; animation: shake 0.3s; }
 
-        /* Docent Bediening */
-        .admin-panel {
-            background: white; padding: 20px; border-radius: 12px;
-            margin-bottom: 2rem; box-shadow: var(--shadow);
-            display: none; border-left: 5px solid var(--accent);
-        }
+        /* Panels */
+        .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .btn { background: var(--accent); color: var(--primary); border: none; padding: 12px 24px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; }
+        
+        /* Leaderboard */
+        #leaderboard { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        #leaderboard th, #leaderboard td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        .mistake-count { color: var(--error); font-weight: bold; }
 
-        /* Bingo Grid */
-        .grid {
-            display: grid; grid-template-columns: repeat(4, 1fr);
-            gap: 15px; margin-top: 20px;
-        }
-        .cell {
-            background: var(--white); aspect-ratio: 1/1; padding: 12px;
-            border-radius: 10px; display: flex; align-items: center;
-            justify-content: center; text-align: center; font-size: 0.85rem;
-            cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            border: 2px solid transparent; font-weight: 500; overflow: hidden;
-        }
-        .cell:hover { transform: translateY(-3px); border-color: var(--secondary); }
-        .cell.marked {
-            background: var(--primary); color: white;
-            border-color: var(--accent); transform: scale(0.95);
-        }
-
-        /* Win Modal */
-        #win-modal {
-            position: fixed; inset: 0; background: rgba(0,44,82,0.95);
-            display: none; flex-direction: column; justify-content: center;
-            align-items: center; z-index: 2000; color: var(--accent);
-        }
-
-        .btn {
-            background: var(--accent); color: var(--primary); border: none;
-            padding: 12px 25px; border-radius: 6px; font-weight: bold;
-            cursor: pointer; text-transform: uppercase; width: 100%;
-        }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
     </style>
 </head>
 <body>
 
 <div id="login-overlay">
-    <div class="login-card">
-        <h2 style="color: var(--primary); margin-top: 0;">NATO Bingo</h2>
-        <input type="text" id="username" placeholder="Je Naam">
-        <select id="userclass">
-            <option value="">Kies Eenheid</option>
+    <div class="panel" style="width: 300px; text-align: center;">
+        <h2>Bingo Login</h2>
+        <input type="text" id="username" placeholder="Voornaam" style="width:100%; padding:10px; margin:10px 0;">
+        <select id="userclass" style="width:100%; padding:10px; margin:10px 0;">
             <option value="alpha">Alpha</option><option value="bravo">Bravo</option>
             <option value="charlie">Charlie</option><option value="delta">Delta</option>
-            <option value="echo">Echo</option><option value="foxtrot">Foxtrot</option>
-            <option value="golf">Golf</option><option value="hotel">Hotel</option>
-            <option value="juliet">Juliet</option><option value="kilo">Kilo</option>
-            <option value="lima">Lima</option><option value="mike">Mike</option>
         </select>
-        <button class="btn" onclick="startGame()">Start Systeem</button>
+        <button class="btn" onclick="startGame()">Start</button>
     </div>
 </div>
 
-<div class="container" id="bingo-ui">
-    <div class="header">
-        <div id="user-display" class="status-bar"></div>
-        <h1 style="color: var(--primary);">Interactieve Woordenschat</h1>
-        <p id="game-info">Wachten op de eerste trekking...</p>
+<div class="container" id="main-ui">
+    <div class="panel" id="docent-controls" style="display:none; border-top: 5px solid var(--accent);">
+        <h3>Tombola (Docent)</h3>
+        <button class="btn" onclick="drawNewWord()">🔊 VOLGEND WOORD</button>
+        <p id="current-word-display" style="font-weight: bold; margin-top: 10px;"></p>
     </div>
 
-    <div class="admin-panel" id="docent-panel">
-        <h3 style="margin-top:0; color: var(--primary);">Tombola Bediening</h3>
-        <button class="btn" onclick="drawWord()">🔊 VOLGEND WOORD TREKKEN</button>
-        <p id="history" style="font-size: 0.8rem; color: #666; margin-top: 10px;"></p>
+    <div class="panel">
+        <h2 id="status-text">Wachten op start...</h2>
+        <div class="grid" id="bingo-grid"></div>
     </div>
 
-    <div class="grid" id="bingo-grid"></div>
-</div>
-
-<div id="win-modal">
-    <h1 style="font-size: 5rem; margin: 0;">🏆</h1>
-    <h2 style="font-size: 3rem;">BINGO!</h2>
-    <p id="winner-text" style="color: white; font-size: 1.2rem;"></p>
-    <button class="btn" style="width: auto; margin-top: 20px;" onclick="location.reload()">Nieuwe Kaart</button>
+    <div class="panel" id="leaderboard-panel">
+        <h3>Live Leaderboard (Eenheid <span id="class-label"></span>)</h3>
+        <table id="leaderboard">
+            <thead><tr><th>Naam</th><th>Goed</th><th>Fouten</th><th>Status</th></tr></thead>
+            <tbody id="leaderboard-body"></tbody>
+        </table>
+    </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyC-Of0AUOd-kVo2RKxYc-68Gr-RO4HdRk0",
@@ -140,103 +84,130 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const woordenData = [
-        { w: "Geometrie", b: "Meetkunde" }, { w: "Cargadoor", b: "Bevracht schepen en neemt ladingen aan" },
+    const woordenLijst = [
+        { w: "Geometrie", b: "Meetkunde" }, { w: "Cargadoor", b: "Iemand die schepen bevracht" },
         { w: "Transito", b: "Doorvoer van handelswaren" }, { w: "Nominatie", b: "Voordracht ter benoeming" },
-        { w: "Zenit", b: "Punt op de hemelbol recht boven de waarnemer" }, { w: "Topic", b: "Onderwerp van discussie" },
-        { w: "Engagement", b: "Betrokkenheid" }, { w: "Understatement", b: "Iets veel minder erg uitdrukken dan het is" },
-        { w: "Nijverheid", b: "Arbeidzaamheid; industrie" }, { w: "Meridianen", b: "Halve cirkels die de polen verbinden" },
-        { w: "Coördinaten", b: "Positie in lengte- en breedtegraden" }, { w: "Ironisch", b: "Tegenovergestelde zeggen van wat je bedoelt" },
-        { w: "Idyllisch", b: "Bekoorlijk door landelijke eenvoud" }, { w: "Embargo", b: "Publicatieverbod tot een bepaalde datum" },
-        { w: "Monopolie", b: "Alleenrecht" }, { w: "Collectioneurs", b: "Verzamelaars van kunst of boeken" },
-        { w: "Usances", b: "Gewoonten en gebruiken" }, { w: "Zwelgen", b: "Zich ergens met graagte aan overgeven" },
+        { w: "Zenit", b: "Punt op hemelbol recht boven waarnemer" }, { w: "Topic", b: "Onderwerp van discussie" },
+        { w: "Engagement", b: "Betrokkenheid" }, { w: "Understatement", b: "Iets minder erg uitdrukken dan het is" },
+        { w: "Nijverheid", b: "Arbeidzaamheid; industrie" }, { w: "Meridianen", b: "Halve cirkels polen verbinden" },
+        { w: "Coördinaten", b: "Positie in lengte- en breedtegraden" }, { w: "Ironisch", b: "Tegenovergestelde zeggen" },
+        { w: "Idyllisch", b: "Landelijke eenvoud en lieflijkheid" }, { w: "Embargo", b: "Publicatieverbod tot bepaalde datum" },
+        { w: "Monopolie", b: "Alleenrecht" }, { w: "Collectioneurs", b: "Verzamelaars" },
+        { w: "Usances", b: "Gewoonten; gebruiken" }, { w: "Zwelgen", b: "Zich er met graagte aan overgeven" },
         { w: "Veinzen", b: "Doen alsof" }, { w: "Adhesie", b: "Instemming" },
-        { w: "Mausoleum", b: "Graftombe of praalgraf" }, { w: "Catacombe", b: "Ruimte onder een stadiontribune" },
-        { w: "Convergeren", b: "In één punt samenkomen" }, { w: "Annexeren", b: "Een gebied inlijven" },
-        { w: "Titulatuur", b: "Benaming voor waardigheid (bijv. excellentie)" }, { w: "Staven", b: "Bevestigen of hard maken" },
-        { w: "Talmen", b: "Treuzelen of iets uitstellen" }, { w: "Prononceren", b: "Duidelijk tot uitdrukking brengen" },
-        { w: "Toucheren", b: "In ontvangst nemen of innen" }, { w: "Autoriseren", b: "Volmacht of vergunning verlenen" },
+        { w: "Mausoleum", b: "Graftombe, praalgraf" }, { w: "Catacombe", b: "Ruimte onder stadiontribune" },
+        { w: "Convergeren", b: "In één punt samenkomen" }, { w: "Annexeren", b: "Gebied inlijven" },
+        { w: "Titulatuur", b: "Benaming voor waardigheid" }, { w: "Staven", b: "Bevestigen; hard maken" },
+        { w: "Talmen", b: "Treuzelen; iets uitstellen" }, { w: "Prononceren", b: "Duidelijk tot uitdrukking brengen" },
+        { w: "Toucheren", b: "In ontvangst nemen; innen" }, { w: "Autoriseren", b: "Volmacht geven" },
         { w: "Adagio", b: "Langzaam te spelen muziek" }, { w: "Intermezzo", b: "Tussenspel" },
-        { w: "Precedenten", b: "Voorafgaande feiten waarop men zich beroept" },
-        { w: "restaurant", b: "Eetgelegenheid" }, { w: "losbarsten", b: "Plotseling en heftig beginnen" },
-        { w: "mijmeren", b: "Diep nadenken over het verleden" }, { w: "corps", b: "Georganiseerde groep" },
-        { w: "treuzelen", b: "Dralen of uitstellen" }, { w: "dwaling", b: "Vergissing" },
-        { w: "landbouwer", b: "Boer" }, { w: "vinyl", b: "Grammofoonplaat materiaal" },
-        { w: "corresponderen", b: "Schriftelijk communiceren" }, { w: "mazen", b: "Gaten in een net of wet" },
-        { w: "dakbeschot", b: "Houten beplanking onder dakpannen" }, { w: "kardinaal", b: "Hoge geestelijke" },
-        { w: "complement", b: "Noodzakelijke aanvulling" }, { w: "potsierlijk", b: "Lachwekkend of raar" },
-        { w: "psychologie", b: "Gedragswetenschap" }, { w: "paperback", b: "Boek met slappe kaft" },
-        { w: "poreuze", b: "Doorlatend materiaal" }, { w: "befaamd", b: "Beroemd" }, { w: "ballast", b: "Nodeloos gewicht" }
+        { w: "Precedenten", b: "Voorafgaande feiten" }, { w: "restaurant", b: "Eetgelegenheid" },
+        { w: "losbarsten", b: "Plotseling beginnen" }, { w: "mijmeren", b: "Nadenken over vroeger" },
+        { w: "corps", b: "Studentengroep" }, { w: "treuzelen", b: "Dralen" },
+        { w: "dwaling", b: "Vergissing" }, { w: "landbouwer", b: "Boer" },
+        { w: "vinyl", b: "Platenmateriaal" }, { w: "corresponderen", b: "Schrijven" },
+        { w: "mazen", b: "Gaten in net" }, { w: "dakbeschot", b: "Hout onder pannen" },
+        { w: "kardinaal", b: "Geestelijke" }, { w: "complement", b: "Aanvulling" },
+        { w: "potsierlijk", b: "Raar" }, { w: "psychologie", b: "Gedragsleer" },
+        { w: "paperback", b: "Slappe kaft" }, { w: "poreuze", b: "Met gaatjes" },
+        { w: "befaamd", b: "Beroemd" }, { w: "ballast", b: "Extra gewicht" }
     ];
 
-    let myName, myClass, mySelection = [], markedCells = new Array(16).fill(false);
-    let drawnWords = [];
+    let myName, myClass, mySelection = [], marked = new Array(16).fill(false);
+    let history = [];
 
     window.startGame = function() {
         myName = document.getElementById('username').value.trim();
         myClass = document.getElementById('userclass').value;
-        if(!myName || !myClass) return;
+        if(!myName) return;
 
         document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('bingo-ui').style.display = 'block';
-        document.getElementById('user-display').innerText = `${myClass.toUpperCase()} - ${myName}`;
+        document.getElementById('main-ui').style.display = 'block';
+        document.getElementById('class-label').innerText = myClass.toUpperCase();
 
-        if(myName.toLowerCase() === 'docent') document.getElementById('docent-panel').style.display = 'block';
+        if(myName.toLowerCase() === 'docent') {
+            document.getElementById('docent-controls').style.display = 'block';
+            set(ref(db, `session/${myClass}`), { history: [], lastWord: "" });
+        }
 
-        createBoard();
-        listenToTombola();
+        generateBoard();
+        initSync();
     };
 
-    function createBoard() {
+    function generateBoard() {
         const grid = document.getElementById('bingo-grid');
-        mySelection = [...woordenData].sort(() => 0.5 - Math.random()).slice(0, 16);
-        
-        mySelection.forEach((item, index) => {
+        mySelection = [...woordenLijst].sort(() => 0.5 - Math.random()).slice(0, 16);
+        mySelection.forEach((item, i) => {
             const cell = document.createElement('div');
             cell.className = 'cell';
-            cell.innerText = item.b; // Toon definitie
-            cell.onclick = () => {
-                cell.classList.toggle('marked');
-                markedCells[index] = !markedCells[index];
-                checkBingo();
-            };
+            cell.innerText = item.b;
+            cell.onclick = () => validateClick(item.w, i, cell);
             grid.appendChild(cell);
         });
     }
 
-    // DOCENT: Woord trekken
-    window.drawWord = function() {
-        const remaining = woordenData.filter(x => !drawnWords.includes(x.w));
-        if(remaining.length === 0) return alert("Alle woorden zijn op!");
-        
-        const picked = remaining[Math.floor(Math.random() * remaining.length)];
-        set(ref(db, `bingo_session/${myClass}`), {
-            word: picked.w,
-            audio: `./${picked.w.toLowerCase()}.mp3`, // Lokale MP3
-            timestamp: Date.now()
+    async function validateClick(woord, idx, element) {
+        if(marked[idx]) return;
+        const snap = await get(ref(db, `session/${myClass}/history`));
+        const played = snap.val() || [];
+
+        if(played.includes(woord)) {
+            marked[idx] = true;
+            element.classList.add('marked');
+            updateStats(1, 0);
+            checkBingo();
+        } else {
+            element.classList.add('wrong');
+            setTimeout(() => element.classList.remove('wrong'), 500);
+            updateStats(0, 1);
+        }
+    }
+
+    function updateStats(plusScore, plusMistake) {
+        const r = ref(db, `leaderboard/${myClass}/${myName}`);
+        get(r).then(s => {
+            const d = s.val() || { score: 0, mistakes: 0 };
+            update(r, { score: d.score + plusScore, mistakes: d.mistakes + plusMistake });
         });
+    }
+
+    window.drawNewWord = function() {
+        const remaining = woordenLijst.filter(x => !history.includes(x.w));
+        const picked = remaining[Math.floor(Math.random() * remaining.length)];
+        history.push(picked.w);
+        set(ref(db, `session/${myClass}`), { history: history, lastWord: picked.w, ts: Date.now() });
     };
 
-    // STUDENT: Luisteren
-    function listenToTombola() {
-        onValue(ref(db, `bingo_session/${myClass}`), (snapshot) => {
-            const data = snapshot.val();
+    function initSync() {
+        // Luister naar audio
+        onValue(ref(db, `session/${myClass}`), (s) => {
+            const d = s.val();
+            if(d && d.lastWord) {
+                history = d.history;
+                new Audio(`./${d.lastWord.toLowerCase()}.mp3`).play();
+                document.getElementById('status-text').innerText = "Zoek de betekenis!";
+                if(myName === 'docent') document.getElementById('current-word-display').innerText = "Laatst: " + d.lastWord;
+            }
+        });
+
+        // Update Leaderboard
+        onValue(ref(db, `leaderboard/${myClass}`), (s) => {
+            const data = s.val();
+            const body = document.getElementById('leaderboard-body');
+            body.innerHTML = "";
             if(data) {
-                drawnWords.push(data.word);
-                new Audio(data.audio).play();
-                document.getElementById('game-info').innerText = "Nieuw woord gespeeld! Zoek de betekenis...";
-                if(myName.toLowerCase() === 'docent') {
-                    document.getElementById('history').innerText = `Laatst getrokken: ${data.word}`;
-                }
+                Object.entries(data).sort((a,b) => b[1].score - a[1].score).forEach(([name, val]) => {
+                    body.innerHTML += `<tr><td>${name}</td><td>${val.score}</td><td class="mistake-count">${val.mistakes}</td><td>${val.bingo ? '🏆 BINGO' : 'Bezig...'}</td></tr>`;
+                });
             }
         });
     }
 
     function checkBingo() {
         const lines = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15],[0,5,10,15],[3,6,9,12]];
-        if(lines.some(l => l.every(i => markedCells[i]))) {
-            document.getElementById('win-modal').style.display = 'flex';
-            document.getElementById('winner-text').innerText = `${myName} heeft Bingo!`;
+        if(lines.some(l => l.every(i => marked[i]))) {
+            update(ref(db, `leaderboard/${myClass}/${myName}`), { bingo: true });
+            alert("BINGO! Gefeliciteerd!");
         }
     }
 </script>
