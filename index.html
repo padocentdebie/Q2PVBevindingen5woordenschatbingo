@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gevalideerde Woordenschat Bingo</title>
+    <title>Woordenschat Bingo - Docent Dashboard</title>
     <style>
-        :root { --primary: #002C52; --accent: #FFD700; --error: #ff4444; --bg: #F0F4F8; }
+        :root { --primary: #002C52; --accent: #FFD700; --error: #ff4444; --bg: #F0F4F8; --success: #28a745; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; }
         
-        /* Containers */
         .container { width: 95%; max-width: 1000px; margin: 20px; display: none; }
         #login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
         
-        /* Bingo Card */
+        /* Grid alleen voor studenten */
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
         .cell { 
             background: white; aspect-ratio: 1/1; padding: 10px; border-radius: 8px; 
@@ -23,13 +22,13 @@
         .cell.marked { background: var(--primary); color: white; border-color: var(--accent); }
         .cell.wrong { background: var(--error); color: white; animation: shake 0.3s; }
 
-        /* Panels */
         .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .btn { background: var(--accent); color: var(--primary); border: none; padding: 12px 24px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; }
+        .btn { background: var(--accent); color: var(--primary); border: none; padding: 12px 24px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 10px; }
+        .btn-danger { background: var(--error); color: white; }
         
-        /* Leaderboard */
-        #leaderboard { width: 100%; margin-top: 20px; border-collapse: collapse; }
-        #leaderboard th, #leaderboard td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        #leaderboard { width: 100%; border-collapse: collapse; }
+        #leaderboard th, #leaderboard td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .winner { background-color: #fff9c4; font-weight: bold; }
         .mistake-count { color: var(--error); font-weight: bold; }
 
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
@@ -50,19 +49,27 @@
 </div>
 
 <div class="container" id="main-ui">
-    <div class="panel" id="docent-controls" style="display:none; border-top: 5px solid var(--accent);">
-        <h3>Tombola (Docent)</h3>
-        <button class="btn" onclick="drawNewWord()">🔊 VOLGEND WOORD</button>
-        <p id="current-word-display" style="font-weight: bold; margin-top: 10px;"></p>
+    <div id="docent-view" style="display:none;">
+        <div class="panel" style="border-top: 5px solid var(--accent);">
+            <h3>Control Panel (Docent)</h3>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" onclick="drawNewWord()">🔊 VOLGEND WOORD</button>
+                <button class="btn btn-danger" onclick="resetSession()">🔄 RESET BINGO</button>
+            </div>
+            <p id="current-word-display" style="font-size: 1.2rem; font-weight: bold; color: var(--primary);"></p>
+            <small id="word-history" style="color: #666;"></small>
+        </div>
+    </div>
+
+    <div id="student-view" style="display:none;">
+        <div class="panel">
+            <h2 id="status-text">Wachten op de docent...</h2>
+            <div class="grid" id="bingo-grid"></div>
+        </div>
     </div>
 
     <div class="panel">
-        <h2 id="status-text">Wachten op start...</h2>
-        <div class="grid" id="bingo-grid"></div>
-    </div>
-
-    <div class="panel" id="leaderboard-panel">
-        <h3>Live Leaderboard (Eenheid <span id="class-label"></span>)</h3>
+        <h3>Live Voortgang - Eenheid <span id="class-label"></span></h3>
         <table id="leaderboard">
             <thead><tr><th>Naam</th><th>Goed</th><th>Fouten</th><th>Status</th></tr></thead>
             <tbody id="leaderboard-body"></tbody>
@@ -72,7 +79,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, get, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyC-Of0AUOd-kVo2RKxYc-68Gr-RO4HdRk0",
@@ -126,16 +133,18 @@
         document.getElementById('class-label').innerText = myClass.toUpperCase();
 
         if(myName.toLowerCase() === 'docent') {
-            document.getElementById('docent-controls').style.display = 'block';
-            set(ref(db, `session/${myClass}`), { history: [], lastWord: "" });
+            document.getElementById('docent-view').style.display = 'block';
+        } else {
+            document.getElementById('student-view').style.display = 'block';
+            generateBoard();
         }
-
-        generateBoard();
         initSync();
     };
 
     function generateBoard() {
         const grid = document.getElementById('bingo-grid');
+        grid.innerHTML = "";
+        marked.fill(false);
         mySelection = [...woordenLijst].sort(() => 0.5 - Math.random()).slice(0, 16);
         mySelection.forEach((item, i) => {
             const cell = document.createElement('div');
@@ -173,31 +182,58 @@
 
     window.drawNewWord = function() {
         const remaining = woordenLijst.filter(x => !history.includes(x.w));
+        if(remaining.length === 0) return alert("Alle woorden zijn op!");
+        
         const picked = remaining[Math.floor(Math.random() * remaining.length)];
         history.push(picked.w);
         set(ref(db, `session/${myClass}`), { history: history, lastWord: picked.w, ts: Date.now() });
     };
 
+    window.resetSession = function() {
+        if(confirm("Weet je zeker dat je alle scores en het spel wilt resetten voor deze klas?")) {
+            remove(ref(db, `session/${myClass}`));
+            remove(ref(db, `leaderboard/${myClass}`));
+            location.reload(); // Herlaad om alles schoon te maken
+        }
+    }
+
     function initSync() {
-        // Luister naar audio
         onValue(ref(db, `session/${myClass}`), (s) => {
             const d = s.val();
             if(d && d.lastWord) {
                 history = d.history;
-                new Audio(`./${d.lastWord.toLowerCase()}.mp3`).play();
-                document.getElementById('status-text').innerText = "Zoek de betekenis!";
-                if(myName === 'docent') document.getElementById('current-word-display').innerText = "Laatst: " + d.lastWord;
+                if(myName.toLowerCase() !== 'docent') {
+                    new Audio(`./${d.lastWord.toLowerCase()}.mp3`).play();
+                    document.getElementById('status-text').innerText = "Zoek de betekenis!";
+                } else {
+                    document.getElementById('current-word-display').innerText = "Huidig woord: " + d.lastWord;
+                    document.getElementById('word-history').innerText = "Eerder getrokken: " + history.join(", ");
+                }
+            } else if (!d) {
+                // Sessie is gereset door docent
+                if(myName.toLowerCase() !== 'docent') {
+                    alert("De docent heeft het spel gereset.");
+                    location.reload();
+                }
             }
         });
 
-        // Update Leaderboard
         onValue(ref(db, `leaderboard/${myClass}`), (s) => {
             const data = s.val();
             const body = document.getElementById('leaderboard-body');
             body.innerHTML = "";
             if(data) {
-                Object.entries(data).sort((a,b) => b[1].score - a[1].score).forEach(([name, val]) => {
-                    body.innerHTML += `<tr><td>${name}</td><td>${val.score}</td><td class="mistake-count">${val.mistakes}</td><td>${val.bingo ? '🏆 BINGO' : 'Bezig...'}</td></tr>`;
+                Object.entries(data)
+                .sort((a,b) => b[1].score - a[1].score)
+                .forEach(([name, val]) => {
+                    const isBingo = val.bingo ? '🏆 BINGO' : 'Bezig...';
+                    const rowClass = val.bingo ? 'winner' : '';
+                    body.innerHTML += `<tr class="${rowClass}">
+                        <td>${name}</td>
+                        <td>${val.score}</td>
+                        <td class="mistake-count">${val.mistakes}</td>
+                        <td>${isBingo}</td>
+                    </tr>`;
                 });
             }
         });
