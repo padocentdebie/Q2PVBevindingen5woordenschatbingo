@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nato Bingo | Woordenschat Live</title>
+    <style>
+        :root { --kb: #002C52; --accent: #004682; --goud: #FFD700; --wit: #FFFFFF; --bg: #ECEFF1; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; }
+        
+        /* Login Scherm */
+        #login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; border-top: 6px solid var(--kb); width: 320px; }
+
+        /* Bingo UI */
+        .bingo-container { max-width: 700px; width: 95%; margin: 20px auto; display: none; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #CFD8DC; padding: 15px; border-radius: 8px; }
+        .cell { aspect-ratio: 1/1; background: white; border: 1px solid #B0BEC5; display: flex; align-items: center; justify-content: center; padding: 8px; text-align: center; font-size: 11px; cursor: pointer; border-radius: 4px; transition: 0.2s; font-weight: 500; }
+        .cell.marked { background: var(--accent); color: white; transform: scale(0.96); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+
+        /* Admin/Docent Panel */
+        .admin-panel { background: var(--kb); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; display: none; width: 100%; box-sizing: border-box; }
+        .btn-play { background: var(--goud); color: var(--kb); border: none; padding: 15px 30px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 16px; text-transform: uppercase; }
+        
+        /* Winnaar Overlay */
+        #win-overlay { position: fixed; inset: 0; background: rgba(0,44,82,0.98); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200; color: var(--goud); text-align: center; }
+        .animate-win { animation: bounce 1s infinite; font-size: 80px; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-30px); } }
+
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+<div id="login-overlay">
+    <div class="login-card">
+        <h2 style="color: var(--kb); margin-bottom: 5px;">woordenschat bingo</h2>
+        <p style="font-size: 12px; color: #666; margin-bottom: 20px;">voornamen Alpha t/m Mike (geen India)</p>
+        <input type="text" id="username" placeholder="jouw voornaam">
+        <select id="userclass">
+            <option value="">-- kies je eenheid --</option>
+            <option value="alpha">alpha</option><option value="bravo">bravo</option>
+            <option value="charlie">charlie</option><option value="delta">delta</option>
+            <option value="echo">echo</option><option value="foxtrot">foxtrot</option>
+            <option value="golf">golf</option><option value="hotel">hotel</option>
+            <option value="juliet">juliet</option><option value="kilo">kilo</option>
+            <option value="lima">lima</option><option value="mike">mike</option>
+        </select>
+        <button onclick="startGame()" style="background:var(--kb); color:white; border:none; padding:15px; width:100%; cursor:pointer; font-weight:bold; border-radius:4px;">START HET SPEL</button>
+    </div>
+</div>
+
+<div class="bingo-container" id="bingo-ui">
+    <div class="admin-panel" id="docent-panel">
+        <button class="btn-play" onclick="triggerRandomWord()">🔊 SPEEL RANDOM WOORD</button>
+        <p id="last-word" style="margin-top:10px; font-size: 13px; color: var(--goud);"></p>
+    </div>
+    
+    <h3 id="status-msg" style="text-align:center; color: var(--kb); margin-bottom: 20px;">Wachten op de docent...</h3>
+    <div class="grid" id="bingo-grid"></div>
+</div>
+
+<div id="win-overlay">
+    <div class="animate-win">🏆</div>
+    <h1 style="font-size: 50px;">BINGO!</h1>
+    <p id="win-message" style="font-size: 20px; color: white;"></p>
+    <button onclick="location.reload()" style="background:var(--goud); color:var(--kb); border:none; padding:15px 40px; margin-top:30px; cursor:pointer; font-weight:bold; border-radius:4px;">VOLGENDE RONDE</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC-Of0AUOd-kVo2RKxYc-68Gr-RO4HdRk0",
+        authDomain: "q2aangifteles2.firebaseapp.com",
+        databaseURL: "https://q2aangifteles2-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "q2aangifteles2",
+        storageBucket: "q2aangifteles2.appspot.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const woordenLijst = [
+        { w: "restaurant", b: "Eetgelegenheid waar je dineert." },
+        { w: "losbarsten", b: "Plotseling en heftig beginnen." },
+        { w: "mijmeren", b: "Diep en rustig nadenken over vroeger." },
+        { w: "corps", b: "Georganiseerde groep (studenten of politie)." },
+        { w: "treuzelen", b: "Iets langzaam doen of uitstellen." },
+        { w: "dwaling", b: "Een vergissing of onjuist denkbeeld." },
+        { w: "landbouwer", b: "Iemand die een boerenbedrijf voert." },
+        { w: "vinyl", b: "Materiaal van grammofoonplaten." },
+        { w: "corresponderen", b: "Schriftelijk communiceren." },
+        { w: "mazen", b: "De gaten in een net of een wet." },
+        { w: "dakbeschot", b: "Houten beplanking onder dakpannen." },
+        { w: "minaret", b: "De slanke toren bij een moskee." },
+        { w: "kardinaal", b: "Hoge geestelijke katholieke kerk." },
+        { w: "complement", b: "Een noodzakelijke aanvulling." },
+        { w: "potsierlijk", b: "Bespottelijk, lachwekkend of raar." },
+        { w: "psychologie", b: "Leer van de menselijke geest." },
+        { w: "paperback", b: "Een boek met een slappe kaft." },
+        { w: "poreuze", b: "Materiaal met kleine gaatjes." },
+        { w: "befaamd", b: "Heel bekend of beroemd." },
+        { w: "ballast", b: "Nodeloos gewicht dat je meesleept." }
+    ];
+
+    let myName = "";
+    let myClass = "";
+    let markedCells = new Array(16).fill(false);
+    let playedWords = [];
+
+    window.startGame = function() {
+        myName = document.getElementById('username').value.trim();
+        myClass = document.getElementById('userclass').value;
+
+        if(!myName || !myClass) return alert("Vul je naam en eenheid in!");
+
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('bingo-ui').style.display = 'block';
+
+        if(myName.toLowerCase() === 'docent') {
+            document.getElementById('docent-panel').style.display = 'block';
+        }
+
+        generateBoard();
+        listenForAudio();
+    };
+
+    function generateBoard() {
+        const grid = document.getElementById('bingo-grid');
+        // Selecteer 16 willekeurige woorden voor de kaart
+        const selection = [...woordenLijst].sort(() => 0.5 - Math.random()).slice(0, 16);
+
+        selection.forEach((item, index) => {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.innerText = item.b; // Toon de betekenis
+            cell.onclick = () => {
+                cell.classList.toggle('marked');
+                markedCells[index] = !markedCells[index];
+                checkWin();
+            };
+            grid.appendChild(cell);
+        });
+    }
+
+    // --- DOCENT FUNCTIE ---
+    window.triggerRandomWord = function() {
+        const availableWords = woordenLijst.filter(x => !playedWords.includes(x.w));
+        if(availableWords.length === 0) return alert("Alle woorden zijn gespeeld!");
+
+        const randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+        playedWords.push(randomWord.w);
+
+        // De URL bouwen naar je Firebase Storage map 'audio'
+        const audioUrl = `https://firebasestorage.googleapis.com/v0/b/${firebaseConfig.storageBucket}/o/audio%2F${randomWord.w}.mp3?alt=media`;
+
+        set(ref(db, `bingo_live/${myClass}`), {
+            word: randomWord.w,
+            audio: audioUrl,
+            time: Date.now()
+        });
+        
+        document.getElementById('last-word').innerText = `Nu bezig: ${randomWord.w}`;
+    };
+
+    // --- STUDENT FUNCTIE ---
+    function listenForAudio() {
+        onValue(ref(db, `bingo_live/${myClass}`), (snapshot) => {
+            const data = snapshot.val();
+            if(data && data.audio) {
+                const audio = new Audio(data.audio);
+                audio.play();
+                document.getElementById('status-msg').innerText = "Luister goed...";
+                setTimeout(() => { 
+                    document.getElementById('status-msg').innerText = "Zoek de betekenis!";
+                }, 2000);
+            }
+        });
+    }
+
+    function checkWin() {
+        const winLines = [
+            [0,1,2,3], [4,5,6,7], [8,9,10,11], [12,13,14,15], // hor
+            [0,4,8,12], [1,5,9,13], [2,6,10,14], [3,7,11,15], // ver
+            [0,5,10,15], [3,6,9,12] // diag
+        ];
+
+        if(winLines.some(line => line.every(idx => markedCells[idx]))) {
+            document.getElementById('win-overlay').style.display = 'flex';
+            document.getElementById('win-message').innerText = `L
