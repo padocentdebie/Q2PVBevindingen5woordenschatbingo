@@ -145,20 +145,21 @@
 </div>
 
 <script type="module">
-    import { initializeApp as _0x1 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase as _0x2, ref as _0x3, set as _0x4, onValue as _0x5, get as _0x6, update as _0x7, remove as _0x8 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue, get, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    const _0xC = {
-        apiKey: "\x41\x49\x7a\x61\x53\x79\x43\x2d\x4f\x66\x30\x41\x55\x4f\x64\x2d\x6b\x56\x6f\x32\x52\x4b\x78\x59\x63\x2d\x36\x38\x47\x72\x2d\x52\x4f\x34\x48\x64\x52\x6b\x30",
-        authDomain: "\x71\x32\x61\x61\x6e\x67\x69\x66\x74\x65\x6c\x65\x73\x32\x2e\x66\x69\x72\x65\x62\x61\x73\x65\x61\x70\x70\x2e\x63\x6f\x6d",
-        databaseURL: "\x68\x74\x74\x70\x73\x3a\x2f\x2f\x71\x32\x61\x61\x6e\x67\x69\x66\x74\x65\x6c\x65\x73\x32\x2d\x64\x65\x66\x61\x75\x6c\x74\x2d\x72\x74\x64\x62\x2e\x65\x75\x72\x6f\x70\x65\x2d\x77\x65\x73\x74\x31\x2e\x66\x69\x72\x65\x62\x61\x73\x65\x64\x61\x74\x61\x62\x61\x73\x65\x2e\x61\x70\x70",
-        projectId: "\x71\x32\x61\x61\x6e\x67\x69\x66\x74\x65\x6c\x65\x73\x32"
+    // Configuratie
+    const firebaseConfig = {
+        apiKey: "AIzaSyC-Of0AUOd-kVo2RKxYc-68Gr-RO4HdRk0",
+        authDomain: "q2aangifteles2.firebaseapp.com",
+        databaseURL: "https://q2aangifteles2-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "q2aangifteles2"
     };
 
-    const _0xA = _0x1(_0xC);
-    const _0xDB = _0x2(_0xA);
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    const _0xWL = [
+    const wordList = [
         {w:"Geometrie",b:"Meetkunde"},{w:"Cargadoor",b:"Iemand die schepen bevracht"},{w:"Transito",b:"Doorvoer van handelswaren"},
         {w:"Nominatie",b:"Voordracht ter benoeming"},{w:"Zenit",b:"Punt op hemelbol recht boven waarnemer"},{w:"Topic",b:"Onderwerp van discussie"},
         {w:"Engagement",b:"Betrokkenheid"},{w:"Understatement",b:"Iets minder erg uitdrukken dan het is"},{w:"Nijverheid",b:"Arbeidzaamheid; industrie"},
@@ -177,114 +178,116 @@
         {w:"poreuze",b:"Met gaatjes"},{w:"befaamd",b:"Beroemd"},{w:"ballast",b:"Extra gewicht"}
     ];
 
-    let _U, _K, _S = [], _M = new Array(16).fill(false), _H = [];
+    let user, userClass, mySelection = [], markedCells = new Array(16).fill(false), currentHistory = [];
 
     window.startGame = function() {
-        _U = document.getElementById('username').value.trim();
-        _K = document.getElementById('userclass').value;
-        if(!_U) return alert("Naam invullen aub!");
+        user = document.getElementById('username').value.trim();
+        userClass = document.getElementById('userclass').value;
+        if(!user) return alert("Naam invullen aub!");
 
         document.getElementById('login-overlay').style.display = 'none';
         document.getElementById('header').style.display = 'block';
         document.getElementById('main-ui').style.display = 'block';
-        document.getElementById('class-display').innerText = "KLAASSECTIE: " + _K.toUpperCase();
+        document.getElementById('class-display').innerText = "KLAASSECTIE: " + userClass.toUpperCase();
 
-        if(_U.toLowerCase() === '\x64\x6f\x63\x65\x6e\x74') {
+        if(user.toLowerCase() === 'docent') {
             document.getElementById('docent-view').style.display = 'block';
         } else {
             document.getElementById('student-view').style.display = 'block';
-            _gen();
+            generateGrid();
         }
-        _sync();
+        syncData();
     };
 
-    function _gen() {
+    function generateGrid() {
         const g = document.getElementById('bingo-grid');
-        g.innerHTML = ""; _M.fill(false);
-        _S = [..._0xWL].sort(() => 0.5 - Math.random()).slice(0, 16);
-        _S.forEach((item, i) => {
+        g.innerHTML = ""; markedCells.fill(false);
+        mySelection = [...wordList].sort(() => 0.5 - Math.random()).slice(0, 16);
+        mySelection.forEach((item, i) => {
             const c = document.createElement('div');
             c.className = 'cell';
             c.innerText = item.b;
-            c.onclick = () => _val(item.w, i, c);
+            c.onclick = () => validateClick(item.w, i, c);
             g.appendChild(c);
         });
     }
 
-    async function _val(w, id, el) {
-        if(_M[id]) return;
-        const sn = await _0x6(_0x3(_0xDB, `session/${_K}/history`));
-        const pl = sn.val() || [];
+    async function validateClick(word, id, el) {
+        if(markedCells[id]) return;
+        
+        // Haal meest recente geschiedenis op
+        const snapshot = await get(ref(db, `session/${userClass}/history`));
+        const history = snapshot.val() || [];
 
-        if(pl.includes(w)) {
-            _M[id] = true;
+        if(history.includes(word)) {
+            markedCells[id] = true;
             el.classList.add('marked');
-            _up(1, 0);
-            _chk();
+            updateScore(1, 0);
+            checkBingo();
         } else {
             el.classList.add('wrong');
             setTimeout(() => el.classList.remove('wrong'), 500);
-            _up(0, 1);
+            updateScore(0, 1);
         }
     }
 
-    function _up(ps, pm) {
-        const r = _0x3(_0xDB, `leaderboard/${_K}/${_U}`);
-        _0x6(r).then(s => {
+    function updateScore(ps, pm) {
+        const r = ref(db, `leaderboard/${userClass}/${user}`);
+        get(r).then(s => {
             const d = s.val() || { score: 0, mistakes: 0 };
-            _0x7(r, { score: d.score + ps, mistakes: d.mistakes + pm });
+            update(r, { score: (d.score || 0) + ps, mistakes: (d.mistakes || 0) + pm });
         });
     }
 
     window.drawNewWord = function() {
-        const rem = _0xWL.filter(x => !_H.includes(x.w));
-        if(rem.length === 0) return alert("De ballenbak is leeg!");
-        const p = rem[Math.floor(Math.random() * rem.length)];
-        _H.push(p.w);
-        _0x4(_0x3(_0xDB, `session/${_K}`), { history: _H, lastWord: p.w, ts: Date.now() });
+        const remaining = wordList.filter(x => !currentHistory.includes(x.w));
+        if(remaining.length === 0) return alert("De ballenbak is leeg!");
+        const picked = remaining[Math.floor(Math.random() * remaining.length)];
+        currentHistory.push(picked.w);
+        set(ref(db, `session/${userClass}`), { history: currentHistory, lastWord: picked.w, ts: Date.now() });
     };
 
     window.resetSession = function() {
         if(confirm("BINGO RESETTEN? Alle scores worden gewist!")) {
-            _0x8(_0x3(_0xDB, `session/${_K}`));
-            _0x8(_0x3(_0xDB, `leaderboard/${_K}`));
+            remove(ref(db, `session/${userClass}`));
+            remove(ref(db, `leaderboard/${userClass}`));
             location.reload();
         }
     }
 
-    function _sync() {
-        _0x5(_0x3(_0xDB, `session/${_K}`), (s) => {
+    function syncData() {
+        // Luister naar spelverloop
+        onValue(ref(db, `session/${userClass}`), (s) => {
             const d = s.val();
             if(d && d.lastWord) {
-                _H = d.history;
-                if(_U.toLowerCase() !== '\x64\x6f\x63\x65\x6e\x74') {
+                currentHistory = d.history || [];
+                if(user.toLowerCase() !== 'docent') {
                     document.getElementById('status-text').innerHTML = "🎱 Nieuw woord getrokken: <br><span style='color:var(--bingo-pink); font-size:2rem;'>" + d.lastWord + "</span>";
                 } else {
                     document.getElementById('current-word-display').innerText = "Huidig: " + d.lastWord;
                 }
-            } else if (!d && _U.toLowerCase() !== '\x64\x6f\x63\x65\x6e\x74') {
-                location.reload();
             }
         });
 
-        _0x5(_0x3(_0xDB, `leaderboard/${_K}`), (s) => {
+        // Luister naar leaderboard
+        onValue(ref(db, `leaderboard/${userClass}`), (s) => {
             const data = s.val();
             const b = document.getElementById('leaderboard-body');
             b.innerHTML = "";
             if(data) {
                 Object.entries(data).sort((a,b) => b[1].score - a[1].score).forEach(([n, v]) => {
                     const win = v.bingo ? '🏆 BINGO!' : '🍀 Spelend';
-                    if(v.bingo) confetti({ particleCount: 5, spread: 20, origin: { y: 0.8 } }); // Beetje confetti bij updates
-                    b.innerHTML += `<tr class="${v.bingo ? 'winner' : ''}"><td>${n}</td><td>${v.score}</td><td class="mistake-count">${v.mistakes}</td><td>${win}</td></tr>`;
+                    if(v.bingo) confetti({ particleCount: 2, spread: 40, origin: { y: 0.8 } });
+                    b.innerHTML += `<tr class="${v.bingo ? 'winner' : ''}"><td>${n}</td><td>${v.score || 0}</td><td>${v.mistakes || 0}</td><td>${win}</td></tr>`;
                 });
             }
         });
     }
 
-    function _chk() {
-        const l = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15],[0,5,10,15],[3,6,9,12]];
-        if(l.some(x => x.every(i => _M[i]))) {
-            _0x7(_0x3(_0xDB, `leaderboard/${_K}/${_U}`), { bingo: true });
+    function checkBingo() {
+        const lines = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15],[0,5,10,15],[3,6,9,12]];
+        if(lines.some(x => x.every(i => markedCells[i]))) {
+            update(ref(db, `leaderboard/${userClass}/${user}`), { bingo: true });
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             alert("🎰 BINGO!!! GEFELICITEERD! 🎰");
         }
