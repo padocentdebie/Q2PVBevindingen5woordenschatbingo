@@ -9,136 +9,73 @@
         :root { 
             --primary: #2c3e50; 
             --accent: #f1c40f; 
-            --bingo-pink: #e91e63;
-            --error: #ff4757; 
+            --bingo-green: #10b981;
+            --error: #ef4444; 
             --bg: #2f3542; 
             --card-bg: #ffffff;
         }
 
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: var(--bg); 
-            color: white;
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .header-vibe {
-            text-align: center;
-            padding: 20px;
-            background: linear-gradient(45deg, var(--bingo-pink), #8e44ad);
-            width: 100%;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            margin-bottom: 20px;
-        }
-
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .header-vibe { text-align: center; padding: 20px; background: linear-gradient(45deg, #2c3e50, #8e44ad); width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-bottom: 20px; }
         .container { width: 95%; max-width: 900px; display: none; padding-bottom: 50px; }
+        #login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; justify-content: center; align-items: center; }
+        .panel { background: var(--card-bg); color: #333; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); margin-bottom: 20px; border: 4px solid var(--accent); }
         
-        #login-overlay { 
-            position: fixed; inset: 0; background: var(--bg); z-index: 1000; 
-            display: flex; justify-content: center; align-items: center; 
-        }
-
-        .panel { 
-            background: var(--card-bg); color: #333; padding: 25px; 
-            border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
-            margin-bottom: 20px; border: 4px solid var(--accent);
-        }
-
-        .grid { 
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; 
-            margin: 20px 0; background: #ddd; padding: 10px; border-radius: 10px;
-        }
-
-        .cell { 
-            background: white; aspect-ratio: 1/1; padding: 8px; border-radius: 5px; 
-            display: flex; align-items: center; justify-content: center; text-align: center; 
-            font-size: 0.85rem; font-weight: bold; cursor: pointer;
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.1); transition: all 0.2s;
-            border: 2px solid #eee;
-        }
-
-        .cell:hover { transform: scale(1.02); background: #f9f9f9; }
-        .cell.marked { 
-            background: var(--bingo-pink) !important; color: white; 
-            border-color: var(--accent); transform: rotate(-2deg);
-        }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; background: #ddd; padding: 10px; border-radius: 10px; }
+        .cell { background: white; aspect-ratio: 1/1; padding: 8px; border-radius: 5px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: 0.2s; border: 2px solid #eee; }
         
-        .cell.wrong { background: var(--error); color: white; animation: shake 0.3s; }
+        /* De Kleuren */
+        .cell.marked { background: var(--bingo-green) !important; color: white; border-color: #059669; }
+        .cell.wrong { background: var(--error) !important; color: white; animation: shake 0.3s; }
 
-        .btn { 
-            background: var(--accent); color: var(--primary); border: none; 
-            padding: 15px; font-weight: 800; border-radius: 8px; cursor: pointer; 
-            width: 100%; text-transform: uppercase; letter-spacing: 1px;
-        }
-
+        .btn { background: var(--accent); color: var(--primary); border: none; padding: 15px; font-weight: 800; border-radius: 8px; cursor: pointer; width: 100%; text-transform: uppercase; }
         .btn-danger { background: var(--error); color: white; margin-top: 10px; }
-
-        #leaderboard { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        #leaderboard th { background: #eee; }
+        #leaderboard { width: 100%; border-collapse: collapse; }
         #leaderboard td, #leaderboard th { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        
-        .winner { background-color: #fff9c4 !important; animation: pulse 1s infinite; }
-        
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div id="login-overlay">
     <div class="panel" style="width: 320px; text-align: center;">
-        <h1 style="margin-top:0;">🎫 BINGO!</h1>
-        <p>Vul je gegevens in om mee te spelen</p>
-        <input type="text" id="username" placeholder="Je Naam" style="width:90%; padding:12px; margin:10px 0; border: 2px solid #ddd; border-radius: 5px;">
-        <select id="userclass" style="width:100%; padding:12px; margin:10px 0; border: 2px solid #ddd; border-radius: 5px;">
+        <h1>🎫 BINGO!</h1>
+        <input type="text" id="username" placeholder="Je Naam" style="width:90%; padding:12px; margin:10px 0;">
+        <select id="userclass" style="width:100%; padding:12px; margin:10px 0;">
             <option value="alpha">Klas Alpha</option>
             <option value="bravo">Klas Bravo</option>
             <option value="charlie">Klas Charlie</option>
-            <option value="delta">Klas Delta</option>
-            <option value="echo">Klas Echo</option>
-            <option value="foxtrot">Klas Foxtrot</option>
-            <option value="golf">Klas Golf</option>
-            <option value="hotel">Klas Hotel</option>
-            <option value="Juliett">Klas Juliett</option>
-            <option value="kilo">Klas Kilo</option>
-            <option value="lima">Klas Lima</option>
-            <option value="mike">Klas Mike</option>
         </select>
-        <button class="btn" onclick="startGame()">🎟️ DEELNAME STARTEN</button>
+        <button class="btn" onclick="startGame()">START</button>
     </div>
 </div>
 
 <div class="header-vibe" id="header" style="display:none;">
-    <h1 style="margin:0;">🎰 BINGO DASHBOARD 🎰</h1>
-    <p id="class-display" style="font-weight:bold; color: var(--accent);"></p>
+    <h1>🎰 BINGO DASHBOARD 🎰</h1>
+    <p id="class-display"></p>
 </div>
 
 <div class="container" id="main-ui">
     <div id="docent-view" style="display:none;">
         <div class="panel">
-            <h3 style="margin-top:0;">Docent Bediening</h3>
-            <button class="btn" onclick="drawNewWord()">🔊 VOLGEND WOORD TREKKEN</button>
-            <p id="current-word-display" style="font-size: 1.5rem; text-align:center; color: var(--bingo-pink); min-height: 40px;"></p>
-            <hr>
-            <button class="btn btn-danger" onclick="resetSession()">🔄 RESET SPEL (VOOR IEDEREEN)</button>
+            <h3>Docent Paneel</h3>
+            <button class="btn" onclick="drawNewWord()">🔊 TREK VOLGEND WOORD</button>
+            <p id="current-word-display" style="font-size: 2rem; text-align:center; font-weight:bold; color:#e91e63;"></p>
+            <button class="btn btn-danger" onclick="resetSession()">🔄 RESET SPEL</button>
         </div>
     </div>
 
     <div id="student-view" style="display:none;">
         <div class="panel">
-            <h2 id="status-text" style="text-align:center; margin-top:0;">Wachten op de eerste bal... 🎱</h2>
+            <h2 id="status-text" style="text-align:center;">Wachten op docent...</h2>
             <div class="grid" id="bingo-grid"></div>
         </div>
     </div>
 
     <div class="panel">
-        <h3 style="margin-top:0;">🏆 Live Tussenstand</h3>
+        <h3>🏆 Live Score</h3>
         <table id="leaderboard">
-            <thead><tr><th>Speler</th><th>Punten</th><th>Fouten</th><th>Status</th></tr></thead>
+            <thead><tr><th>Speler</th><th>Goed</th><th>Fouten</th><th>Status</th></tr></thead>
             <tbody id="leaderboard-body"></tbody>
         </table>
     </div>
@@ -148,10 +85,8 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, get, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // Configuratie
     const firebaseConfig = {
         apiKey: "AIzaSyC-Of0AUOd-kVo2RKxYc-68Gr-RO4HdRk0",
-        authDomain: "q2aangifteles2.firebaseapp.com",
         databaseURL: "https://q2aangifteles2-default-rtdb.europe-west1.firebasedatabase.app",
         projectId: "q2aangifteles2"
     };
@@ -163,19 +98,19 @@
         {w:"Geometrie",b:"Meetkunde"},{w:"Cargadoor",b:"Iemand die schepen bevracht"},{w:"Transito",b:"Doorvoer van handelswaren"},
         {w:"Nominatie",b:"Voordracht ter benoeming"},{w:"Zenit",b:"Punt op hemelbol recht boven waarnemer"},{w:"Topic",b:"Onderwerp van discussie"},
         {w:"Engagement",b:"Betrokkenheid"},{w:"Understatement",b:"Iets minder erg uitdrukken dan het is"},{w:"Nijverheid",b:"Arbeidzaamheid; industrie"},
-        {w:"Meridianen",b:"Halve cirkels polen verbinden"},{w:"Co\xF6rdinaten",b:"Positie in lengte- en breedtegraden"},{w:"Ironisch",b:"Tegenovergestelde zeggen"},
+        {w:"Meridianen",b:"Halve cirkels die de polen verbinden"},{w:"Co\xF6rdinaten",b:"Positie in lengte- en breedtegraden"},{w:"Ironisch",b:"Het tegenovergestelde zeggen"},
         {w:"Idyllisch",b:"Landelijke eenvoud en lieflijkheid"},{w:"Embargo",b:"Publicatieverbod tot bepaalde datum"},{w:"Monopolie",b:"Alleenrecht"},
         {w:"Collectioneurs",b:"Verzamelaars"},{w:"Usances",b:"Gewoonten; gebruiken"},{w:"Zwelgen",b:"Zich er met graagte aan overgeven"},
-        {w:"Veinzen",b:"Doen alsof"},{w:"Adhesie",b:"Instemming"},{w:"Mausoleum",b:"Graftombe, praalgraf"},{w:"Catacombe",b:"Ruimte onder stadiontribune"},
+        {w:"Veinzen",b:"Doen alsof"},{w:"Adhesie",b:"Instemming"},{w:"Mausoleum",b:"Graftombe, praalgraf"},{w:"Catacombe",b:"Ondergrondse begraafplaats"},
         {w:"Convergeren",b:"In \xE9\xE9n punt samenkomen"},{w:"Annexeren",b:"Gebied inlijven"},{w:"Titulatuur",b:"Benaming voor waardigheid"},
         {w:"Staven",b:"Bevestigen; hard maken"},{w:"Talmen",b:"Treuzelen; iets uitstellen"},{w:"Prononceren",b:"Duidelijk tot uitdrukking brengen"},
-        {w:"Toucheren",b:"In ontvangst nemen; innen"},{w:"Autoriseren",b:"Volmacht geven"},{w:"Adagio",b:"Langzaam te spelen muziek"},
-        {w:"Intermezzo",b:"Tussenspel"},{w:"Precedenten",b:"Voorafgaande feiten"},{w:"restaurant",b:"Eetgelegenheid"},
-        {w:"losbarsten",b:"Plotseling beginnen"},{w:"mijmeren",b:"Nadenken over vroeger"},{w:"corps",b:"Studentengroep"},
-        {w:"treuzelen",b:"Dralen"},{w:"dwaling",b:"Vergissing"},{w:"landbouwer",b:"Boer"},{w:"vinyl",b:"Platenmateriaal"},
-        {w:"corresponderen",b:"Schrijven"},{w:"mazen",b:"Gaten in net"},{w:"dakbeschot",b:"Hout onder pannen"},{w:"kardinaal",b:"Geestelijke"},
-        {w:"complement",b:"Aanvulling"},{w:"potsierlijk",b:"Raar"},{w:"psychologie",b:"Gedragsleer"},{w:"paperback",b:"Slappe kaft"},
-        {w:"poreuze",b:"Met gaatjes"},{w:"befaamd",b:"Beroemd"},{w:"ballast",b:"Extra gewicht"}
+        {w:"Toucheren",b:"In ontvangst nemen; innen"},{w:"Autoriseren",b:"Volmacht geven"},{w:"Adagio",b:"Langzaam te spelen muziekstuk"},
+        {w:"Intermezzo",b:"Tussenspel"},{w:"Precedenten",b:"Voorafgaande feiten"},{w:"Restaurant",b:"Eetgelegenheid"},
+        {w:"Losbarsten",b:"Plotseling beginnen"},{w:"Mijmeren",b:"Nadenken over vroeger"},{w:"Corps",b:"Studentengroep"},
+        {w:"Treuzelen",b:"Dralen"},{w:"Dwaling",b:"Vergissing"},{w:"Landbouwer",b:"Boer"},{w:"Vinyl",b:"Platenmateriaal"},
+        {w:"Corresponderen",b:"Brieven schrijven"},{w:"Mazen",b:"Gaten in een net"},{w:"Dakbeschot",b:"Houten bekleding onder de pannen"},{w:"Kardinaal",b:"Hoge geestelijke"},
+        {w:"Complement",b:"Aanvulling"},{w:"Potsierlijk",b:"Raar; lachwekkend"},{w:"Psychologie",b:"Gedragsleer"},{w:"Paperback",b:"Boek met slappe kaft"},
+        {w:"Poreuze",b:"Met kleine gaatjes"},{w:"Befaamd",b:"Beroemd"},{w:"Ballast",b:"Nutteloze extra last"}
     ];
 
     let user, userClass, mySelection = [], markedCells = new Array(16).fill(false), currentHistory = [];
@@ -183,12 +118,11 @@
     window.startGame = function() {
         user = document.getElementById('username').value.trim();
         userClass = document.getElementById('userclass').value;
-        if(!user) return alert("Naam invullen aub!");
-
+        if(!user) return;
         document.getElementById('login-overlay').style.display = 'none';
         document.getElementById('header').style.display = 'block';
         document.getElementById('main-ui').style.display = 'block';
-        document.getElementById('class-display').innerText = "KLAASSECTIE: " + userClass.toUpperCase();
+        document.getElementById('class-display').innerText = "KLAS: " + userClass.toUpperCase();
 
         if(user.toLowerCase() === 'docent') {
             document.getElementById('docent-view').style.display = 'block';
@@ -201,33 +135,33 @@
 
     function generateGrid() {
         const g = document.getElementById('bingo-grid');
-        g.innerHTML = ""; markedCells.fill(false);
+        g.innerHTML = "";
         mySelection = [...wordList].sort(() => 0.5 - Math.random()).slice(0, 16);
         mySelection.forEach((item, i) => {
             const c = document.createElement('div');
             c.className = 'cell';
             c.innerText = item.b;
-            c.onclick = () => validateClick(item.w, i, c);
+            c.onclick = () => validateClick(item, i, c);
             g.appendChild(c);
         });
     }
 
-    async function validateClick(word, id, el) {
+    async function validateClick(item, id, el) {
         if(markedCells[id]) return;
         
-        // Haal meest recente geschiedenis op
-        const snapshot = await get(ref(db, `session/${userClass}/history`));
-        const history = snapshot.val() || [];
+        const snap = await get(ref(db, `session/${userClass}/history`));
+        const history = snap.val() || [];
 
-        if(history.includes(word)) {
+        // Check of het WOORD bij deze BETEKENIS al getrokken is
+        if(history.includes(item.w)) {
             markedCells[id] = true;
             el.classList.add('marked');
             updateScore(1, 0);
             checkBingo();
         } else {
             el.classList.add('wrong');
-            setTimeout(() => el.classList.remove('wrong'), 500);
             updateScore(0, 1);
+            setTimeout(() => el.classList.remove('wrong'), 500);
         }
     }
 
@@ -241,14 +175,14 @@
 
     window.drawNewWord = function() {
         const remaining = wordList.filter(x => !currentHistory.includes(x.w));
-        if(remaining.length === 0) return alert("De ballenbak is leeg!");
+        if(remaining.length === 0) return alert("Alle woorden zijn op!");
         const picked = remaining[Math.floor(Math.random() * remaining.length)];
         currentHistory.push(picked.w);
-        set(ref(db, `session/${userClass}`), { history: currentHistory, lastWord: picked.w, ts: Date.now() });
+        set(ref(db, `session/${userClass}`), { history: currentHistory, lastWord: picked.w });
     };
 
     window.resetSession = function() {
-        if(confirm("BINGO RESETTEN? Alle scores worden gewist!")) {
+        if(confirm("Alles wissen?")) {
             remove(ref(db, `session/${userClass}`));
             remove(ref(db, `leaderboard/${userClass}`));
             location.reload();
@@ -256,29 +190,25 @@
     }
 
     function syncData() {
-        // Luister naar spelverloop
         onValue(ref(db, `session/${userClass}`), (s) => {
             const d = s.val();
-            if(d && d.lastWord) {
+            if(d) {
                 currentHistory = d.history || [];
                 if(user.toLowerCase() !== 'docent') {
-                    document.getElementById('status-text').innerHTML = "🎱 Nieuw woord getrokken: <br><span style='color:var(--bingo-pink); font-size:2rem;'>" + d.lastWord + "</span>";
+                    document.getElementById('status-text').innerHTML = "🎱 Huidig Woord: <br><span style='color:#e91e63; font-size:2.5rem;'>" + d.lastWord + "</span>";
                 } else {
-                    document.getElementById('current-word-display').innerText = "Huidig: " + d.lastWord;
+                    document.getElementById('current-word-display').innerText = d.lastWord;
                 }
             }
         });
 
-        // Luister naar leaderboard
         onValue(ref(db, `leaderboard/${userClass}`), (s) => {
             const data = s.val();
             const b = document.getElementById('leaderboard-body');
             b.innerHTML = "";
             if(data) {
                 Object.entries(data).sort((a,b) => b[1].score - a[1].score).forEach(([n, v]) => {
-                    const win = v.bingo ? '🏆 BINGO!' : '🍀 Spelend';
-                    if(v.bingo) confetti({ particleCount: 2, spread: 40, origin: { y: 0.8 } });
-                    b.innerHTML += `<tr class="${v.bingo ? 'winner' : ''}"><td>${n}</td><td>${v.score || 0}</td><td>${v.mistakes || 0}</td><td>${win}</td></tr>`;
+                    b.innerHTML += `<tr><td>${n}</td><td>${v.score || 0}</td><td>${v.mistakes || 0}</td><td>${v.bingo ? '🏆' : '⏳'}</td></tr>`;
                 });
             }
         });
@@ -288,8 +218,7 @@
         const lines = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15],[0,5,10,15],[3,6,9,12]];
         if(lines.some(x => x.every(i => markedCells[i]))) {
             update(ref(db, `leaderboard/${userClass}/${user}`), { bingo: true });
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            alert("🎰 BINGO!!! GEFELICITEERD! 🎰");
+            confetti({ particleCount: 150, spread: 70 });
         }
     }
 </script>
